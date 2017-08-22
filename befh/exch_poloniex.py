@@ -232,12 +232,12 @@ class ExchGwPoloniex(ExchangeGateway):
                        "instmt.get_exch_trade_id()(%s) = %s" % (type(instmt.get_exch_trade_id()), instmt.get_exch_trade_id())
                 if int(trade.trade_id) > int(instmt.get_exch_trade_id()):
                     instmt.set_exch_trade_id(trade.trade_id)
-                    try:
-                        instmt.incr_trade_id()
-                        self.insert_trade(instmt, trade)
-                    except Exception as e:
-                        Logger.error(self.__class__.__name__, "Error inserting trade: %s" % e)
-            
+                try:
+                    instmt.incr_trade_id()
+                    self.insert_trade(instmt, trade)
+                except Exception as e:
+                    Logger.error(self.__class__.__name__, "Error inserting trade: %s" % e)
+        
             # After the first time of getting the trade, indicate the instrument
             # is recovered
             if not instmt.get_recovered():
