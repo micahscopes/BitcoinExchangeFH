@@ -8,7 +8,7 @@ from functools import partial
 from datetime import datetime
 import threading
 import time
-
+import calendar
 
 class ExchGwApiPoloniex(RESTfulApiSocket):
     """
@@ -55,10 +55,17 @@ class ExchGwApiPoloniex(RESTfulApiSocket):
 
     @classmethod
     def get_trades_link(cls, instmt):
+        Logger.info(cls,'last trade: %s' % instmt.get_last_trade())
         if instmt.get_last_trade() is not None:
-            return "https://poloniex.com/public?command=returnTradeHistory&currencyPair=%s&start=%d" % \
-                (instmt.get_instmt_code(), int(instmt.get_last_trade().update_date_time.timestamp()) - 1)
+            link = "https://poloniex.com/public?command=returnTradeHistory&currencyPair=%s&start=%d" % \
+                (instmt.get_instmt_code(), int(instmt.get_last_trade().update_date_time) - 1)
+            Logger.info(cls,'using link: '+link)
+            Logger.info(cls,'current time: %s' % datetime.utcnow().timestamp())
+            Logger.info(cls,'last trade time: %s' % instmt.get_last_trade().update_date_time)
+
+            return link
         else:
+            Logger.info(cls,"getting all trades")
             return "https://poloniex.com/public?command=returnTradeHistory&currencyPair=%s" % \
                 (instmt.get_instmt_code())         
                 
@@ -116,7 +123,7 @@ class ExchGwApiPoloniex(RESTfulApiSocket):
             date_time = raw[cls.get_trades_timestamp_field_name()]
             date_time = datetime.strptime(date_time, cls.get_trades_timestamp_format())
             trade.date_time = date_time.strftime("%Y%m%d %H:%M:%S.%f")      
-            
+            trade.update_date_time = calendar.timegm(date_time.utctimetuple()) 
             # Trade side
             trade.trade_side = 1 if raw[cls.get_trade_side_field_name()] == 'buy' else 2
                 
@@ -225,8 +232,11 @@ class ExchGwPoloniex(ExchangeGateway):
                        "instmt.get_exch_trade_id()(%s) = %s" % (type(instmt.get_exch_trade_id()), instmt.get_exch_trade_id())
                 if int(trade.trade_id) > int(instmt.get_exch_trade_id()):
                     instmt.set_exch_trade_id(trade.trade_id)
-                    instmt.incr_trade_id()
-                    self.insert_trade(instmt, trade)
+                    try:
+                        instmt.incr_trade_id()
+                        self.insert_trade(instmt, trade)
+                    except Exception as e:
+                        Logger.error(self.__class__.__name__, "Error inserting trade: %s" % e)
             
             # After the first time of getting the trade, indicate the instrument
             # is recovered
@@ -266,4 +276,4 @@ if __name__ == '__main__':
     instmt.set_prev_l2_depth(L2Depth(5))
     instmt.set_recovered(False)    
     # exch.get_order_book_worker(instmt)
-    exch.get_trades_worker(instmt)
+    # exch.get_trades_worker(instmt)
