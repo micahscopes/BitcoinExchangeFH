@@ -47,7 +47,7 @@ class ExchangeGateway:
         :param instmt_name: Instrument name
         """
         return 'exch_' + exchange.lower() + '_' + instmt_name.lower() + \
-               '_snapshot_' + datetime.utcnow().strftime("%Y%m%d")
+               '_snapshot_' + datetime.utcnow().strftime("%Y_%m_%d_%H_%M")
         
     @classmethod
     def get_snapshot_table_name(cls):
@@ -72,7 +72,9 @@ class ExchangeGateway:
     def init_instmt_snapshot_table(self, instmt):
         table_name = self.get_instmt_snapshot_table_name(instmt.get_exchange_name(),
                                                          instmt.get_instmt_name())
+        
         for db_client in self.db_clients:
+
             db_client.create(table_name,
                              ['id'] + Snapshot.columns(False),
                              ['int'] + Snapshot.types(False),

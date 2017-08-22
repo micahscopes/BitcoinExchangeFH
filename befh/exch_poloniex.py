@@ -39,7 +39,7 @@ class ExchGwApiPoloniex(RESTfulApiSocket):
         
     @classmethod
     def get_trade_id_field_name(cls):
-        return 'tradeID'
+        return 'globalTradeID'
         
     @classmethod
     def get_trade_price_field_name(cls):
@@ -55,17 +55,17 @@ class ExchGwApiPoloniex(RESTfulApiSocket):
 
     @classmethod
     def get_trades_link(cls, instmt):
-        Logger.info(cls,'last trade: %s' % instmt.get_last_trade())
+#        Logger.info(cls,'last trade: %s' % instmt.get_last_trade())
         if instmt.get_last_trade() is not None:
             link = "https://poloniex.com/public?command=returnTradeHistory&currencyPair=%s&start=%d" % \
                 (instmt.get_instmt_code(), int(instmt.get_last_trade().update_date_time) - 1)
-            Logger.info(cls,'using link: '+link)
-            Logger.info(cls,'current time: %s' % datetime.utcnow().timestamp())
-            Logger.info(cls,'last trade time: %s' % instmt.get_last_trade().update_date_time)
+#            Logger.info(cls,'using link: '+link)
+#            Logger.info(cls,'current time: %s' % datetime.utcnow().timestamp())
+#            Logger.info(cls,'last trade time: %s' % instmt.get_last_trade().update_date_time)
 
             return link
         else:
-            Logger.info(cls,"getting all trades")
+#            Logger.info(cls,"getting all trades")
             return "https://poloniex.com/public?command=returnTradeHistory&currencyPair=%s" % \
                 (instmt.get_instmt_code())         
                 
@@ -230,14 +230,17 @@ class ExchGwPoloniex(ExchangeGateway):
                 assert isinstance(trade.trade_id, str), "trade.trade_id(%s) = %s" % (type(trade.trade_id), trade.trade_id)
                 assert isinstance(instmt.get_exch_trade_id(), str), \
                        "instmt.get_exch_trade_id()(%s) = %s" % (type(instmt.get_exch_trade_id()), instmt.get_exch_trade_id())
+                #Logger.info(self.__class__.__name__,'trade.trade_id: %s' % trade.trade_id)
+                #Logger.info(self.__class__.__name__,'instmt.get_exch_trade_id(): %s' % instmt.get_exch_trade_id())
+ 
                 if int(trade.trade_id) > int(instmt.get_exch_trade_id()):
                     instmt.set_exch_trade_id(trade.trade_id)
-                    try:
-                        instmt.incr_trade_id()
-                        self.insert_trade(instmt, trade)
-                    except Exception as e:
-                        Logger.error(self.__class__.__name__, "Error inserting trade: %s" % e)
-            
+                try:
+                    instmt.incr_trade_id()
+                    self.insert_trade(instmt, trade)
+                except Exception as e:
+                    Logger.error(self.__class__.__name__, "Error inserting trade: %s" % e)
+        
             # After the first time of getting the trade, indicate the instrument
             # is recovered
             if not instmt.get_recovered():
