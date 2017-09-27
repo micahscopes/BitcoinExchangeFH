@@ -47,7 +47,7 @@ class ExchangeGateway:
         :param instmt_name: Instrument name
         """
         return 'exch_' + exchange.lower() + '_' + instmt_name.lower() + \
-               '_snapshot_' + datetime.utcnow().strftime("%Y%m%d")
+               '_snapshot_' + datetime.utcnow().strftime("%Y_%m_%d_%H_%M")
         
     @classmethod
     def get_snapshot_table_name(cls):
