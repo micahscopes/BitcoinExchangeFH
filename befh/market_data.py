@@ -69,25 +69,21 @@ class L2Depth(MarketDataBase):
         self.bids = [MarketDataBase.Depth() for i in range(0, self.depth)]
         self.asks = [MarketDataBase.Depth() for i in range(0, self.depth)]
 
-    @staticmethod
-    def columns():
+    def columns(self):
         """
-        Return static columns names
+        Return columns names
         """
-        return ['date_time',
-                'b1', 'b2', 'b3', 'b4', 'b5',
-                'a1', 'a2', 'a3', 'a4', 'a5',
-                'bq1', 'bq2', 'bq3', 'bq4', 'bq5',
-                'aq1', 'aq2', 'aq3', 'aq4', 'aq5']
+        keys = ['b','a','bq','aq']
+        idx = [i+1 for i in range(self.depth)]
+        return ['date_time']+sum([['%s%i' % (k,i) for i in idx] for k in keys])
 
-    @staticmethod
-    def types():
+    def types(self):
         """
-        Return static column types
+        Return column types
         """
         return ['varchar(25)'] + \
-               ['decimal(10,5)'] * 10 + \
-               ['decimal(20,8)'] * 10
+               ['decimal(10,5)'] * self.depth*2 + \
+               ['decimal(20,8)'] * self.depth*2
 
     def values(self):
         """
@@ -101,8 +97,8 @@ class L2Depth(MarketDataBase):
                    [a.volume for a in self.asks]
         else:
             return [self.date_time] + \
-                   [b.price for b in self.bids[0:5]] + \
-                   [a.price for a in self.asks[0:5]] + \
+                   [b.price for b in self.bids] + \
+                   [a.price for a in self.asks] + \
                    [b.volume for b in self.bids[0:5]] + \
                    [a.volume for a in self.asks[0:5]]
 
@@ -134,13 +130,13 @@ class L2Depth(MarketDataBase):
         ret.asks = [e.copy() for e in self.asks]
         return ret
 
-    def is_diff(self, l2_depth):
+    def is_diff(self, l2_depth, level=5):
         """
-        Compare the first 5 price depth
+        Compare the first N prices
         :param l2_depth: Another L2Depth object
         :return: True if they are different
         """
-        for i in range(0, 5):
+        for i in range(0, level):
             if abs(self.bids[i].price - l2_depth.bids[i].price) > 1e-09 or \
                abs(self.bids[i].volume - l2_depth.bids[i].volume) > 1e-09:
                 return True
