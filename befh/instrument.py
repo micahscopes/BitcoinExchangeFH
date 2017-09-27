@@ -7,6 +7,7 @@ class Instrument(object):
                  instmt_name,
                  instmt_code,
                  depth=5,
+                 poll_interval=2,
                  **param):
         """
         Constructor
@@ -15,6 +16,7 @@ class Instrument(object):
         :param param: Options parameters, e.g. restful_order_book_link
         :return:
         """
+        self.poll_interval=poll_interval
         self.depth=depth
         self.exchange_name = exchange_name
         self.instmt_name = instmt_name
@@ -41,6 +43,7 @@ class Instrument(object):
         self.instmt_name = obj.instmt_name
         self.instmt_code = obj.instmt_code
         self.depth = obj.depth
+        self.polling_interval = obj.polling_interval
         self.instmt_snapshot_table_name = obj.instmt_snapshot_table_name
         self.order_book_id = obj.order_book_id
         self.trade_id = obj.trade_id

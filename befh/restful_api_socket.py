@@ -3,12 +3,12 @@ try:
     import urllib.request as urlrequest
 except ImportError:
     import urllib as urlrequest
-
+from befh.util import Logger
 import json
 import ssl
 
 class RESTfulApiSocket(ApiSocket):
-    TIMEOUT=2
+    TIMEOUT=7
     """
     Generic REST API call
     """
@@ -35,6 +35,7 @@ class RESTfulApiSocket(ApiSocket):
             res = json.loads(res.read().decode('utf8'))
             return res
         except:
+            Logger.error('HTTP request error',url)
             return {}
         
     @classmethod

@@ -51,23 +51,21 @@ class ExchGwApiPoloniex(RESTfulApiSocket):
         
     @classmethod
     def get_order_book_link(cls, instmt):
-        return "https://poloniex.com/public?command=returnOrderBook&currencyPair=%s&depth=%s" % (instmt.get_instmt_code(),instmt.depth)
-
+        link = "https://poloniex.com/public?command=returnOrderBook&currencyPair=%s&depth=%s" % (instmt.get_instmt_code(),instmt.depth)           
+        # Logger.info(cls,'using link: '+link)
+        return link
+                    
     @classmethod
     def get_trades_link(cls, instmt):
-#        Logger.info(cls,'last trade: %s' % instmt.get_last_trade())
         if instmt.get_last_trade() is not None:
             link = "https://poloniex.com/public?command=returnTradeHistory&currencyPair=%s&start=%d" % \
                 (instmt.get_instmt_code(), int(instmt.get_last_trade().update_date_time) - 1)
-#            Logger.info(cls,'using link: '+link)
-#            Logger.info(cls,'current time: %s' % datetime.utcnow().timestamp())
-#            Logger.info(cls,'last trade time: %s' % instmt.get_last_trade().update_date_time)
-
-            return link
         else:
-#            Logger.info(cls,"getting all trades")
-            return "https://poloniex.com/public?command=returnTradeHistory&currencyPair=%s" % \
+            link = "https://poloniex.com/public?command=returnTradeHistory&currencyPair=%s" % \
                 (instmt.get_instmt_code())         
+        
+        #Logger.info(cls,'using link: '+link)
+        return link
                 
     @classmethod
     def parse_l2_depth(cls, instmt, raw):
@@ -149,11 +147,13 @@ class ExchGwApiPoloniex(RESTfulApiSocket):
         :param instmt: Instrument
         :return: Object L2Depth
         """
-        res = cls.request(cls.get_order_book_link(instmt))
+        link=cls.get_order_book_link(instmt)
+        res = cls.request(link)
         if len(res) > 0:
             return cls.parse_l2_depth(instmt=instmt,
                                        raw=res)
         else:
+            #Logger.info('request returned nothing.',link)
             return None
 
     @classmethod
@@ -172,7 +172,9 @@ class ExchGwApiPoloniex(RESTfulApiSocket):
                 trade = cls.parse_trade(instmt=instmt,
                                          raw=res[i])
                 trades.append(trade)
-
+        else:
+            #Logger.info('request returned nothing.',link)
+            pass
         return trades
 
 
@@ -213,7 +215,7 @@ class ExchGwPoloniex(ExchangeGateway):
                     #Logger.info(self.__class__.__name__, "inserted orderbook: %s" % v)
             except Exception as e:
                 Logger.error(self.__class__.__name__, "Error in order book: %s" % e)
-            time.sleep(1)
+            time.sleep(instmt.poll_interval)
 
     def get_trades_worker(self, instmt):
         """
@@ -224,18 +226,17 @@ class ExchGwPoloniex(ExchangeGateway):
             try:
                 ret = self.api_socket.get_trades(instmt)
                 if ret is None or len(ret) == 0:
-                    time.sleep(1)
+                    time.sleep(instmt.poll_interval)
                     continue
             except Exception as e:
                 Logger.error(self.__class__.__name__, "Error in trades: %s" % e)                
-                
-            for trade in ret:
-                assert isinstance(trade.trade_id, str), "trade.trade_id(%s) = %s" % (type(trade.trade_id), trade.trade_id)
                 assert isinstance(instmt.get_exch_trade_id(), str), \
                        "instmt.get_exch_trade_id()(%s) = %s" % (type(instmt.get_exch_trade_id()), instmt.get_exch_trade_id())
                 #Logger.info(self.__class__.__name__,'trade.trade_id: %s' % trade.trade_id)
                 #Logger.info(self.__class__.__name__,'instmt.get_exch_trade_id(): %s' % instmt.get_exch_trade_id())
  
+            
+            for trade in ret:    
                 if int(trade.trade_id) > int(instmt.get_exch_trade_id()):
                     instmt.set_exch_trade_id(trade.trade_id)
                     instmt.incr_trade_id()
@@ -246,7 +247,7 @@ class ExchGwPoloniex(ExchangeGateway):
             if not instmt.get_recovered():
                 instmt.set_recovered(True)
 
-            time.sleep(1)
+            time.sleep(instmt.poll_interval)
 
     def start(self, instmt):
         """

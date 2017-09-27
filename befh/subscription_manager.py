@@ -34,6 +34,11 @@ class SubscriptionManager:
         except:
             pass
 
+        poll_interval = 5
+        try:
+            poll_interval = int(self.config.get(instmt_id, 'poll_interval'))
+        except:
+            pass
         params = dict(self.config.items(instmt_id))
         del params['exchange']
         del params['instmt_name']
@@ -45,8 +50,12 @@ class SubscriptionManager:
         except:
             pass
         
+        try:
+            del params['poll_interval']
+        except:
+            pass
         if enabled == 1:
-            return Instrument(exchange_name, instmt_name, instmt_code, depth, **params)
+            return Instrument(exchange_name, instmt_name, instmt_code, depth, poll_interval, **params)
         else:
             return None
         
