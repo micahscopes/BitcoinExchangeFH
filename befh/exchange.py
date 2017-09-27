@@ -76,8 +76,8 @@ class ExchangeGateway:
         for db_client in self.db_clients:
 
             db_client.create(table_name,
-                             ['id'] + Snapshot.columns(False),
-                             ['int'] + Snapshot.types(False),
+                             ['id'] + Snapshot.columns(False,depth=instmt.depth),
+                             ['int'] + Snapshot.types(False,depth=instmt.depth),
                              [0])
 
     def start(self, instmt):
@@ -122,8 +122,8 @@ class ExchangeGateway:
 
                 if self.is_allowed_instmt_record(db_client):
                     db_client.insert(table=instmt.get_instmt_snapshot_table_name(),
-                                          columns=['id'] + Snapshot.columns(False),
-                                          types=['int'] + Snapshot.types(False),
+                                          columns=['id'] + Snapshot.columns(False,depth=instmt.depth),
+                                          types=['int'] + Snapshot.types(False,depth=instmt.depth),
                                           values=[id] +
                                                   Snapshot.values('',
                                                                  '',
@@ -157,21 +157,21 @@ class ExchangeGateway:
                 is_allowed_instmt_record = self.is_allowed_instmt_record(db_client)
                 if is_allowed_snapshot:
                     db_client.insert(table=self.get_snapshot_table_name(),
-                                     columns=Snapshot.columns(),
+                                     columns=Snapshot.columns(depth=instmt.depth),
                                      values=Snapshot.values(instmt.get_exchange_name(),
                                                             instmt.get_instmt_name(),
                                                             instmt.get_l2_depth(),
                                                             instmt.get_last_trade(),
                                                             Snapshot.UpdateType.TRADES),
-                                     types=Snapshot.types(),
+                                     types=Snapshot.types(depth=instmt.depth),
                                      primary_key_index=[0,1],
                                      is_orreplace=True,
                                      is_commit=not is_allowed_instmt_record)
 
                 if is_allowed_instmt_record:
                     db_client.insert(table=instmt.get_instmt_snapshot_table_name(),
-                                     columns=['id'] + Snapshot.columns(False),
-                                     types=['int'] + Snapshot.types(False),
+                                     columns=['id'] + Snapshot.columns(False,depth=instmt.depth),
+                                     types=['int'] + Snapshot.types(False,depth=instmt.depth),
                                      values=[id] +
                                             Snapshot.values('',
                                                          '',

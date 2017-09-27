@@ -28,14 +28,25 @@ class SubscriptionManager:
         instmt_name = self.config.get(instmt_id, 'instmt_name')
         instmt_code = self.config.get(instmt_id, 'instmt_code')
         enabled = int(self.config.get(instmt_id, 'enabled'))
+        depth = 5
+        try:
+            depth = int(self.config.get(instmt_id, 'depth'))
+        except:
+            pass
+
         params = dict(self.config.items(instmt_id))
         del params['exchange']
         del params['instmt_name']
         del params['instmt_code']
         del params['enabled']
         
+        try:
+            del params['depth']
+        except:
+            pass
+        
         if enabled == 1:
-            return Instrument(exchange_name, instmt_name, instmt_code, **params)
+            return Instrument(exchange_name, instmt_name, instmt_code, depth, **params)
         else:
             return None
         

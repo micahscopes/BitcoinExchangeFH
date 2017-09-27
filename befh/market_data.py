@@ -68,22 +68,24 @@ class L2Depth(MarketDataBase):
         self.depth = depth
         self.bids = [MarketDataBase.Depth() for i in range(0, self.depth)]
         self.asks = [MarketDataBase.Depth() for i in range(0, self.depth)]
-
-    def columns(self):
+    
+    @staticmethod
+    def columns(depth=5):
         """
         Return columns names
         """
         keys = ['b','a','bq','aq']
-        idx = [i+1 for i in range(self.depth)]
-        return ['date_time']+sum([['%s%i' % (k,i) for i in idx] for k in keys])
-
-    def types(self):
+        idx = [i+1 for i in range(depth)]
+        return ['date_time']+['%s%i' % (k,i) for k in keys for i in idx]
+    
+    @staticmethod
+    def types(depth=5):
         """
         Return column types
         """
         return ['varchar(25)'] + \
-               ['decimal(10,5)'] * self.depth*2 + \
-               ['decimal(20,8)'] * self.depth*2
+               ['decimal(10,5)'] * depth*2 + \
+               ['decimal(20,8)'] * depth*2
 
     def values(self):
         """
@@ -204,45 +206,32 @@ class Snapshot(MarketDataBase):
         :param default_format: Default date time format
         """
         MarketDataBase.__init__(self)
-
-    @staticmethod        
-    def columns(is_name=True):
+        
+    @staticmethod
+    def columns(is_name=True, depth=5):
         """
-        Return static columns names
+        Return columns names
         """
-        if is_name:
-            return ['exchange', 'instmt',
-                    'trade_px', 'trade_volume',
-                    'b1', 'b2', 'b3', 'b4', 'b5',
-                    'a1', 'a2', 'a3', 'a4', 'a5',
-                    'bq1', 'bq2', 'bq3', 'bq4', 'bq5',
-                    'aq1', 'aq2', 'aq3', 'aq4', 'aq5',
-                    'order_date_time', 'trades_date_time', 'update_type']
-        else:
-            return ['trade_px', 'trade_volume',
-                    'b1', 'b2', 'b3', 'b4', 'b5',
-                    'a1', 'a2', 'a3', 'a4', 'a5',
-                    'bq1', 'bq2', 'bq3', 'bq4', 'bq5',
-                    'aq1', 'aq2', 'aq3', 'aq4', 'aq5',
-                    'order_date_time', 'trades_date_time', 'update_type']
+        cols =  ['trade_px', 'trade_volume'] + \
+                L2Depth.columns(depth) + \
+                ['order_date_time', 'trades_date_time', 'update_type']
+        
+        is_name_cols =  ['exchange', 'instmt'] if is_name else []
+        
+        return is_name_cols + cols
 
     @staticmethod
-    def types(is_name=True):
+    def types(is_name=True,depth=5):
         """
-        Return static column types
+        Return column types
         """
-        if is_name:
-            return ['varchar(20)', 'varchar(20)', 'decimal(10,5)', 'decimal(20,8)'] + \
-                   ['decimal(10,5)'] * 10 + \
-                   ['decimal(20,8)'] * 10 + \
-                   ['varchar(25)', 'varchar(25)', 'int']
-        else:
-            return ['decimal(10,5)', 'decimal(20,8)'] + \
-                   ['decimal(10,5)'] * 10 + \
-                   ['decimal(20,8)'] * 10 + \
-                   ['varchar(25)', 'varchar(25)', 'int']
+        is_name_cols =  ['varchar(20)', 'varchar(20)'] if is_name else []
+        return is_name_cols + \
+               ['decimal(10,5)', 'decimal(20,8)'] + \
+               L2Depth.types(depth) + \
+               ['varchar(25)', 'varchar(25)', 'int']
 
-                
+    
     @staticmethod
     def values(exchange_name='', instmt_name='', l2_depth=None, last_trade=None, update_type=UpdateType.NONE):
         """
@@ -252,9 +241,9 @@ class Snapshot(MarketDataBase):
         return ([exchange_name] if exchange_name else []) + \
                ([instmt_name] if instmt_name else []) + \
                [last_trade.trade_price, last_trade.trade_volume] + \
-               [b.price for b in l2_depth.bids[0:5]] + \
-               [a.price for a in l2_depth.asks[0:5]] + \
-               [b.volume for b in l2_depth.bids[0:5]] + \
-               [a.volume for a in l2_depth.asks[0:5]] + \
+               [b.price for b in l2_depth.bids] + \
+               [a.price for a in l2_depth.asks] + \
+               [b.volume for b in l2_depth.bids] + \
+               [a.volume for a in l2_depth.asks] + \
                [l2_depth.date_time, last_trade.date_time, update_type]
         

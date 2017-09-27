@@ -51,7 +51,7 @@ class ExchGwApiPoloniex(RESTfulApiSocket):
         
     @classmethod
     def get_order_book_link(cls, instmt):
-        return "https://poloniex.com/public?command=returnOrderBook&currencyPair=%s&depth=5" % instmt.get_instmt_code()
+        return "https://poloniex.com/public?command=returnOrderBook&currencyPair=%s&depth=%s" % (instmt.get_instmt_code(),instmt.depth)
 
     @classmethod
     def get_trades_link(cls, instmt):
@@ -76,7 +76,7 @@ class ExchGwApiPoloniex(RESTfulApiSocket):
         :param instmt: Instrument
         :param raw: Raw data in JSON
         """
-        l2_depth = L2Depth()
+        l2_depth = L2Depth(instmt.depth)
         keys = list(raw.keys())
         if cls.get_bids_field_name() in keys and \
            cls.get_asks_field_name() in keys:
@@ -87,14 +87,14 @@ class ExchGwApiPoloniex(RESTfulApiSocket):
             # Bids
             bids = raw[cls.get_bids_field_name()]
             bids = sorted(bids, key=lambda x: x[0], reverse=True)
-            for i in range(0, 5):
+            for i in range(0, instmt.depth):
                 l2_depth.bids[i].price = float(bids[i][0]) if type(bids[i][0]) != float else bids[i][0]
                 l2_depth.bids[i].volume = float(bids[i][1]) if type(bids[i][1]) != float else bids[i][1]   
                 
             # Asks
             asks = raw[cls.get_asks_field_name()]
             asks = sorted(asks, key=lambda x: x[0])
-            for i in range(0, 5):
+            for i in range(0, instmt.depth):
                 l2_depth.asks[i].price = float(asks[i][0]) if type(asks[i][0]) != float else asks[i][0]
                 l2_depth.asks[i].volume = float(asks[i][1]) if type(asks[i][1]) != float else asks[i][1]            
         else:
@@ -200,6 +200,8 @@ class ExchGwPoloniex(ExchangeGateway):
         Get order book worker
         :param instmt: Instrument
         """
+        Logger.info('instrument depth:',instmt.depth);
+
         while True:
             try:
                 l2_depth = self.api_socket.get_order_book(instmt)
@@ -252,8 +254,8 @@ class ExchGwPoloniex(ExchangeGateway):
         :param instmt: Instrument
         :return List of threads
         """
-        instmt.set_l2_depth(L2Depth(5))
-        instmt.set_prev_l2_depth(L2Depth(5))
+        instmt.set_l2_depth(L2Depth(instmt.depth))
+        instmt.set_prev_l2_depth(L2Depth(instmt.depth))
         instmt.set_instmt_snapshot_table_name(self.get_instmt_snapshot_table_name(instmt.get_exchange_name(),
                                                                                   instmt.get_instmt_name()))
         self.init_instmt_snapshot_table(instmt)

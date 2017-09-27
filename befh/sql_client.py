@@ -55,8 +55,8 @@ class SqlClient(DatabaseClient):
         :param is_ifnotexists: Create table if not exists keyword
         """
         if len(columns) != len(types):
-            raise Exception("Incorrect create statement. Number of columns and that of types are different.\n%s\n%s" % \
-                (columns, types))
+            raise Exception("Incorrect create statement. Number of columns (%i) and that of types (%i) are different.\n%s\n%s" % \
+                (len(columns),len(types),columns, types))
 
         column_names = ''
         for i in range(0, len(columns)):

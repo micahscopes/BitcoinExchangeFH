@@ -6,6 +6,7 @@ class Instrument(object):
                  exchange_name,
                  instmt_name,
                  instmt_code,
+                 depth=5,
                  **param):
         """
         Constructor
@@ -14,6 +15,7 @@ class Instrument(object):
         :param param: Options parameters, e.g. restful_order_book_link
         :return:
         """
+        self.depth=depth
         self.exchange_name = exchange_name
         self.instmt_name = instmt_name
         self.instmt_code = instmt_code
@@ -38,6 +40,7 @@ class Instrument(object):
         self.exchange_name = obj.exchange_name
         self.instmt_name = obj.instmt_name
         self.instmt_code = obj.instmt_code
+        self.depth = obj.depth
         self.instmt_snapshot_table_name = obj.instmt_snapshot_table_name
         self.order_book_id = obj.order_book_id
         self.trade_id = obj.trade_id
