@@ -132,12 +132,16 @@ class L2Depth(MarketDataBase):
         ret.asks = [e.copy() for e in self.asks]
         return ret
 
-    def is_diff(self, l2_depth, level=5):
+    def is_diff(self, l2_depth):
         """
         Compare the first N prices
         :param l2_depth: Another L2Depth object
         :return: True if they are different
         """
+        if l2_depth is None:
+            return False
+        level = min(self.depth,l2_depth.depth)
+
         for i in range(0, level):
             if abs(self.bids[i].price - l2_depth.bids[i].price) > 1e-09 or \
                abs(self.bids[i].volume - l2_depth.bids[i].volume) > 1e-09:
@@ -213,7 +217,7 @@ class Snapshot(MarketDataBase):
         Return columns names
         """
         cols =  ['trade_px', 'trade_volume'] + \
-                L2Depth.columns(depth) + \
+                L2Depth.columns(depth)[1:] + \
                 ['order_date_time', 'trades_date_time', 'update_type']
         
         is_name_cols =  ['exchange', 'instmt'] if is_name else []
@@ -228,7 +232,7 @@ class Snapshot(MarketDataBase):
         is_name_cols =  ['varchar(20)', 'varchar(20)'] if is_name else []
         return is_name_cols + \
                ['decimal(10,5)', 'decimal(20,8)'] + \
-               L2Depth.types(depth) + \
+               L2Depth.types(depth)[1:] + \
                ['varchar(25)', 'varchar(25)', 'int']
 
     

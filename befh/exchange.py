@@ -2,6 +2,7 @@
 from befh.zmq_client import ZmqClient
 from befh.file_client import FileClient
 from befh.market_data import L2Depth, Trade, Snapshot
+from befh.util import Logger
 from datetime import datetime
 from threading import Lock
 
@@ -102,34 +103,39 @@ class ExchangeGateway:
         # If local timestamp indicator is on, assign the local timestamp again
         if self.is_local_timestamp:
             instmt.get_l2_depth().date_time = datetime.utcnow().strftime("%Y%m%d %H:%M:%S.%f")
-        
+        res = None
         # Update the snapshot
         if instmt.get_l2_depth() is not None:
             id = self.get_instmt_snapshot_id(instmt)
             for db_client in self.db_clients:
                 if self.is_allowed_snapshot(db_client):
+                    values=Snapshot.values(instmt.get_exchange_name(),
+                                           instmt.get_instmt_name(),
+                                           instmt.get_l2_depth(),
+                                           Trade() if instmt.get_last_trade() is None else instmt.get_last_trade(),
+                                           Snapshot.UpdateType.ORDER_BOOK)
+
+                    Logger.info('a insert_order_book...', 'columns, values: %s, %s' % (len(values),len(Snapshot.columns(depth=instmt.depth))))
                     db_client.insert(table=self.get_snapshot_table_name(),
-                                     columns=Snapshot.columns(),
-                                     types=Snapshot.types(),
-                                     values=Snapshot.values(instmt.get_exchange_name(),
-                                                            instmt.get_instmt_name(),
-                                                            instmt.get_l2_depth(),
-                                                            Trade() if instmt.get_last_trade() is None else instmt.get_last_trade(),
-                                                            Snapshot.UpdateType.ORDER_BOOK),
+                                     columns=Snapshot.columns(depth=instmt.depth),
+                                     values=values,
+                                     types=Snapshot.types(depth=instmt.depth),
                                      primary_key_index=[0,1],
                                      is_orreplace=True,
                                      is_commit=True)
 
                 if self.is_allowed_instmt_record(db_client):
+                    values= Snapshot.values('',
+                                   '',
+                                   instmt.get_l2_depth(),
+                                   Trade() if instmt.get_last_trade() is None else instmt.get_last_trade(),
+                                   Snapshot.UpdateType.ORDER_BOOK)
+
+                    Logger.info('b insert_order_book()...','columns, values: %s, %s' % (len(values),len(Snapshot.columns(False,depth=instmt.depth))))
                     db_client.insert(table=instmt.get_instmt_snapshot_table_name(),
                                           columns=['id'] + Snapshot.columns(False,depth=instmt.depth),
+                                          values=[id] + values,
                                           types=['int'] + Snapshot.types(False,depth=instmt.depth),
-                                          values=[id] +
-                                                  Snapshot.values('',
-                                                                 '',
-                                                                 instmt.get_l2_depth(),
-                                                                 Trade() if instmt.get_last_trade() is None else instmt.get_last_trade(),
-                                                                 Snapshot.UpdateType.ORDER_BOOK),
                                           is_commit=True)
 
     def insert_trade(self, instmt, trade):

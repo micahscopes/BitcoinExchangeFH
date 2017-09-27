@@ -209,8 +209,8 @@ class ExchGwPoloniex(ExchangeGateway):
                     instmt.set_prev_l2_depth(instmt.get_l2_depth())
                     instmt.set_l2_depth(l2_depth)
                     instmt.incr_order_book_id()
-                    self.insert_order_book(instmt)
-                    #Logger.info(self.__class__.__name__, "inserted orderbook: %s" % instmt.get_order_book_id())
+                    v = self.insert_order_book(instmt)
+                    Logger.info(self.__class__.__name__, "inserted orderbook: %s" % v)
             except Exception as e:
                 Logger.error(self.__class__.__name__, "Error in order book: %s" % e)
             time.sleep(1)
