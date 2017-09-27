@@ -76,14 +76,14 @@ class L2Depth(MarketDataBase):
         """
         keys = ['b','a','bq','aq']
         idx = [i+1 for i in range(depth)]
-        return ['date_time']+['%s%i' % (k,i) for k in keys for i in idx]
+        return ['date_time', 'order_depth']+['%s%i' % (k,i) for k in keys for i in idx]
     
     @staticmethod
     def types(depth=5):
         """
         Return column types
         """
-        return ['varchar(25)'] + \
+        return ['varchar(25)','smallint'] + \
                ['decimal(10,5)'] * depth*2 + \
                ['decimal(20,8)'] * depth*2
 
@@ -91,18 +91,11 @@ class L2Depth(MarketDataBase):
         """
         Return values in a list
         """
-        if self.depth == 5:
-            return [self.date_time] + \
+        return [self.date_time, self.depth] + \
                    [b.price for b in self.bids] + \
                    [a.price for a in self.asks] + \
                    [b.volume for b in self.bids] + \
                    [a.volume for a in self.asks]
-        else:
-            return [self.date_time] + \
-                   [b.price for b in self.bids] + \
-                   [a.price for a in self.asks] + \
-                   [b.volume for b in self.bids[0:5]] + \
-                   [a.volume for a in self.asks[0:5]]
 
     def sort_bids(self):
         """
@@ -245,6 +238,7 @@ class Snapshot(MarketDataBase):
         return ([exchange_name] if exchange_name else []) + \
                ([instmt_name] if instmt_name else []) + \
                [last_trade.trade_price, last_trade.trade_volume] + \
+               [l2_depth.depth] + \
                [b.price for b in l2_depth.bids] + \
                [a.price for a in l2_depth.asks] + \
                [b.volume for b in l2_depth.bids] + \

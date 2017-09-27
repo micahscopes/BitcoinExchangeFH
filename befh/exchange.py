@@ -63,11 +63,11 @@ class ExchangeGateway:
         return not isinstance(db_client, ZmqClient)
 
     @classmethod
-    def init_snapshot_table(cls, db_clients):
+    def init_snapshot_table(cls, db_clients, max_depth=50):
         for db_client in db_clients:
             db_client.create(cls.get_snapshot_table_name(),
-                             Snapshot.columns(),
-                             Snapshot.types(),
+                             Snapshot.columns(depth=max_depth),
+                             Snapshot.types(depth=max_depth),
                              [0,1])
                              
     def init_instmt_snapshot_table(self, instmt):
@@ -115,7 +115,7 @@ class ExchangeGateway:
                                            Trade() if instmt.get_last_trade() is None else instmt.get_last_trade(),
                                            Snapshot.UpdateType.ORDER_BOOK)
 
-                    Logger.info('a insert_order_book...', 'columns, values: %s, %s' % (len(values),len(Snapshot.columns(depth=instmt.depth))))
+                    #Logger.info('a insert_order_book...', 'columns, values: %s, %s' % (len(values),len(Snapshot.columns(depth=instmt.depth))))
                     db_client.insert(table=self.get_snapshot_table_name(),
                                      columns=Snapshot.columns(depth=instmt.depth),
                                      values=values,
@@ -131,7 +131,7 @@ class ExchangeGateway:
                                    Trade() if instmt.get_last_trade() is None else instmt.get_last_trade(),
                                    Snapshot.UpdateType.ORDER_BOOK)
 
-                    Logger.info('b insert_order_book()...','columns, values: %s, %s' % (len(values),len(Snapshot.columns(False,depth=instmt.depth))))
+                    #Logger.info('b insert_order_book()...','columns, values: %s, %s' % (len(values),len(Snapshot.columns(False,depth=instmt.depth))))
                     db_client.insert(table=instmt.get_instmt_snapshot_table_name(),
                                           columns=['id'] + Snapshot.columns(False,depth=instmt.depth),
                                           values=[id] + values,
