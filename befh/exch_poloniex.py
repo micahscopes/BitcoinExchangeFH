@@ -208,6 +208,7 @@ class ExchGwPoloniex(ExchangeGateway):
                     instmt.set_l2_depth(l2_depth)
                     instmt.incr_order_book_id()
                     self.insert_order_book(instmt)
+                    #Logger.info(self.__class__.__name__, "inserted orderbook: %s" % instmt.get_order_book_id())
             except Exception as e:
                 Logger.error(self.__class__.__name__, "Error in order book: %s" % e)
             time.sleep(1)
@@ -235,11 +236,8 @@ class ExchGwPoloniex(ExchangeGateway):
  
                 if int(trade.trade_id) > int(instmt.get_exch_trade_id()):
                     instmt.set_exch_trade_id(trade.trade_id)
-                try:
                     instmt.incr_trade_id()
                     self.insert_trade(instmt, trade)
-                except Exception as e:
-                    Logger.error(self.__class__.__name__, "Error inserting trade: %s" % e)
         
             # After the first time of getting the trade, indicate the instrument
             # is recovered

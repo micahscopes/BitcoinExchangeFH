@@ -8,6 +8,7 @@ import json
 import ssl
 
 class RESTfulApiSocket(ApiSocket):
+    TIMEOUT=2
     """
     Generic REST API call
     """
@@ -27,9 +28,9 @@ class RESTfulApiSocket(ApiSocket):
         req = urlrequest.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
         # res = urlrequest.urlopen(url)
         if verify_cert:
-            res = urlrequest.urlopen(req)
+            res = urlrequest.urlopen(req,timeout=cls.TIMEOUT)
         else:
-            res = urlrequest.urlopen(req, context=ssl._create_unverified_context())
+            res = urlrequest.urlopen(req, context=ssl._create_unverified_context(),timeout=cls.TIMEOUT)
         try:
             res = json.loads(res.read().decode('utf8'))
             return res
